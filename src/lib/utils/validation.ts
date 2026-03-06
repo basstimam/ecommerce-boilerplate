@@ -26,7 +26,7 @@ export const addressSchema = z.object({
   city: z.string().min(2, 'City is required'),
   county: z.string().optional(),
   postcode: ukPostcodeSchema,
-  country: z.string().default('GB'),
+  country: z.string().min(1),
   phone: ukPhoneSchema,
 })
 
