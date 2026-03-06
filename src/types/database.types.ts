@@ -1,6 +1,3 @@
-// Database types — manual definition based on spec
-// Will be regenerated from Supabase CLI after DB migrations (T13)
-
 export type UserRole = 'customer' | 'admin' | 'super_admin'
 export type OrderStatus =
   | 'pending_payment'
@@ -20,9 +17,6 @@ export type ShippingCalculationType = 'flat_rate' | 'per_kg' | 'tiered_weight' |
 export type DeletionRequestStatus = 'pending' | 'processing' | 'completed'
 
 export interface Database {
-  __InternalSupabase: {
-    PostgrestVersion: '12'
-  }
   public: {
     Tables: {
       profiles: {
@@ -64,6 +58,7 @@ export interface Database {
           gdpr_data_retention_days?: number
           updated_at?: string
         }
+        Relationships: []
       }
       addresses: {
         Row: {
@@ -108,6 +103,7 @@ export interface Database {
           is_default?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
       categories: {
         Row: {
@@ -144,6 +140,7 @@ export interface Database {
           is_active?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
       products: {
         Row: {
@@ -225,6 +222,7 @@ export interface Database {
           meta_description?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       product_images: {
         Row: {
@@ -251,6 +249,7 @@ export interface Database {
           sort_order?: number
           is_primary?: boolean
         }
+        Relationships: []
       }
       product_variants: {
         Row: {
@@ -283,6 +282,7 @@ export interface Database {
           is_active?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
       orders: {
         Row: {
@@ -337,6 +337,7 @@ export interface Database {
           status_history?: Array<Record<string, unknown>>
           updated_at?: string
         }
+        Relationships: []
       }
       order_items: {
         Row: {
@@ -372,6 +373,7 @@ export interface Database {
         Update: {
           quantity?: number
         }
+        Relationships: []
       }
       shipping_zones: {
         Row: {
@@ -399,6 +401,7 @@ export interface Database {
           is_active?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
       shipping_zone_regions: {
         Row: {
@@ -419,6 +422,7 @@ export interface Database {
           match_type?: ShippingMatchType
           match_value?: string
         }
+        Relationships: []
       }
       shipping_rates: {
         Row: {
@@ -469,6 +473,7 @@ export interface Database {
           estimated_days_max?: number | null
           updated_at?: string
         }
+        Relationships: []
       }
       shipment_tracking: {
         Row: {
@@ -501,6 +506,7 @@ export interface Database {
           description?: string | null
           tracked_at?: string
         }
+        Relationships: []
       }
       discounts: {
         Row: {
@@ -549,6 +555,7 @@ export interface Database {
           expires_at?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       discount_usage: {
         Row: {
@@ -566,6 +573,7 @@ export interface Database {
           used_at?: string
         }
         Update: Record<string, never>
+        Relationships: []
       }
       wishlists: {
         Row: {
@@ -581,6 +589,7 @@ export interface Database {
           created_at?: string
         }
         Update: Record<string, never>
+        Relationships: []
       }
       reviews: {
         Row: {
@@ -620,6 +629,7 @@ export interface Database {
           admin_reply_at?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       pages: {
         Row: {
@@ -656,6 +666,7 @@ export interface Database {
           meta_description?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       store_settings: {
         Row: {
@@ -674,6 +685,7 @@ export interface Database {
           value?: unknown
           updated_at?: string
         }
+        Relationships: []
       }
       data_deletion_requests: {
         Row: {
@@ -699,6 +711,7 @@ export interface Database {
           completed_at?: string | null
           notes?: string | null
         }
+        Relationships: []
       }
       newsletter_subscribers: {
         Row: {
@@ -724,6 +737,7 @@ export interface Database {
           marketing_consent?: boolean
           unsubscribed_at?: string | null
         }
+        Relationships: []
       }
       invoices: {
         Row: {
@@ -751,6 +765,7 @@ export interface Database {
         Update: {
           pdf_url?: string | null
         }
+        Relationships: []
       }
       admin_audit_log: {
         Row: {
@@ -780,6 +795,7 @@ export interface Database {
         Update: {
           entity_id?: string | null
         }
+        Relationships: []
       }
     }
     Views: Record<string, never>
@@ -805,5 +821,6 @@ export interface Database {
       shipping_match_type: ShippingMatchType
       shipping_calculation_type: ShippingCalculationType
     }
+    CompositeTypes: Record<string, never>
   }
 }

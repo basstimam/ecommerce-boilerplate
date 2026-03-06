@@ -40,3 +40,23 @@
 - Route groups created: (storefront), (auth), admin, api
 - Default page.tsx removed, replaced with (storefront)/page.tsx placeholder
 - Zod v4.3.6 installed (major version 4, not 3 — check for API differences)
+  
+## [2026-03-06] T14 Completed: Auth Pages UI  
+- Zod v4: z.boolean().default(false) menyebabkan type mismatch dengan react-hook-form — solusi: hapus .default(false), gunakan defaultValues di useForm saja  
+- Next.js 15: useSearchParams() wajib wrapped dalam Suspense boundary saat dipakai di page component  
+- Pattern: buat XxxContent() component yang pakai useSearchParams, lalu XxxPage() export default wraps dengan Suspense  
+- GDPR: marketing_consent harus defaultValues false (bukan z.boolean().default(false))  
+- Auth layout: gunakan route group (auth) tanpa Navbar/Footer, centered dengan ShoppingBag icon sebagai logo  
+- Build sukses (0 TypeScript errors), hanya ESLint warnings untuk placeholder _data params 
+  
+## [2026-03-06] T15 Completed: Auth Server Actions + OAuth Callback  
+- @supabase/postgrest-js v2.98.0 memerlukan `Relationships: []` di setiap table definition dalam Database types  
+- Manual Database types tanpa Relationships field menyebabkan `.select()` dan `.update()` resolve ke type `never`  
+- Fix: tambahkan `Relationships: []` ke semua table (akan di-replace oleh `supabase gen types` nanti)  
+- `__InternalSupabase.PostgrestVersion: '12'` juga menyebabkan issues — dihapus dari manual types  
+- Server actions: `'use server'` di top file, import createClient dari server.ts (bukan client.ts)  
+- OAuth callback: Supabase PKCE flow — callback exchanges code for session, no token needed di reset-password  
+- Turbopack catches duplicate variable names (e.g., `const { data }` used twice) even when TS doesn't  
+- sendPasswordReset: ALWAYS return success to prevent email enumeration attacks  
+- `revalidatePath('/', 'layout')` setelah signIn/signOut untuk refresh auth cache  
+- Build sukses (0 TypeScript errors), all routes detected including /auth/callback (dynamic) 
