@@ -3,16 +3,17 @@ import { updateSession } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 import type { Database, UserRole } from '@/types/database.types'
 
-// ─── Route Config ─────────────────────────────────────────────────────────────
-
-/** Routes that require authentication */
 const PROTECTED_ROUTES = ['/account', '/checkout', '/wishlist']
-
-/** Routes that require admin role */
 const ADMIN_ROUTES = ['/admin']
-
-/** Routes only accessible when NOT authenticated */
 const AUTH_ONLY_ROUTES = ['/login', '/register', '/forgot-password']
+
+const RATE_LIMITED_ROUTES: { pattern: RegExp; windowMs: number; limit: number }[] = [
+  { pattern: /^\/(login|register|forgot-password|reset-password)$/, windowMs: 15 * 60 * 1000, limit: 5 },
+  { pattern: /^\/api\/newsletter\/subscribe$/, windowMs: 60 * 1000, limit: 3 },
+  { pattern: /^\/api\/shipping\/calculate$/, windowMs: 60 * 1000, limit: 20 },
+]
+
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 function isProtected(pathname: string) {
   return PROTECTED_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'))
@@ -26,22 +27,48 @@ function isAuthOnly(pathname: string) {
   return AUTH_ONLY_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'))
 }
 
-// ─── Middleware ────────────────────────────────────────────────────────────────
+function checkRateLimit(ip: string, pathname: string): boolean {
+  const rule = RATE_LIMITED_ROUTES.find((r) => r.pattern.test(pathname))
+  if (!rule) return false
+
+  const key = `${ip}:${pathname}`
+  const now = Date.now()
+  const entry = rateLimitMap.get(key)
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + rule.windowMs })
+    return false
+  }
+
+  entry.count += 1
+  if (entry.count > rule.limit) return true
+
+  return false
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Refresh session + get user
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.headers.get('x-real-ip') ??
+    'unknown'
+
+  if (checkRateLimit(ip, pathname)) {
+    return new NextResponse('Too Many Requests', {
+      status: 429,
+      headers: { 'Retry-After': '60' },
+    })
+  }
+
   const { supabaseResponse, user } = await updateSession(request)
 
-  // ── Auth-only routes (redirect authenticated users away) ──────────────────
   if (isAuthOnly(pathname) && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/account'
     return NextResponse.redirect(url)
   }
 
-  // ── Protected customer routes ──────────────────────────────────────────────
   if (isProtected(pathname) && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
@@ -49,9 +76,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // ── Admin routes ───────────────────────────────────────────────────────────
   if (isAdminRoute(pathname)) {
-    // Must be logged in
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
@@ -59,7 +84,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Must have admin role — check profiles table
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -84,7 +108,6 @@ export async function middleware(request: NextRequest) {
     const profile = profileData as { role: UserRole } | null
 
     if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
-      // Authenticated but not admin — redirect to home
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)
@@ -96,14 +119,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths EXCEPT:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico
-     * - public folder files (images, etc.)
-     * - api routes (handled separately)
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
