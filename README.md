@@ -1,13 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UK E-Commerce Boilerplate
 
-## Getting Started
+Production-ready e-commerce boilerplate for the UK market.
 
-First, run the development server:
+**Stack**: Next.js 15 (App Router) · TypeScript · Bun · Supabase · Stripe · Resend · Tailwind v4
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
+bun install
+cp .env.local.example .env.local
+# fill in .env.local
+bun dev
 # or
 pnpm dev
 # or

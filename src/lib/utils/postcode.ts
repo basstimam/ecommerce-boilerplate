@@ -24,3 +24,7 @@ export function getPostcodeArea(postcode: string): string {
   const outward = getOutwardCode(postcode)
   return outward.replace(/[0-9].*/g, '')
 }
+
+export function normalizePostcode(postcode: string): string {
+  return postcode.trim().toUpperCase().replace(/\s+/g, '')
+}

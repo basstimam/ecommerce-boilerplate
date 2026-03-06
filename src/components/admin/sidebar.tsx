@@ -13,6 +13,7 @@ import {
   Settings,
   ClipboardList,
   BarChart2,
+  Mail,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +25,7 @@ const navItems = [
   { label: 'Shipping', href: '/admin/shipping', icon: Truck },
   { label: 'Discounts', href: '/admin/discounts', icon: Tag },
   { label: 'Pages', href: '/admin/pages', icon: FileText },
+  { label: 'Newsletter', href: '/admin/newsletter', icon: Mail },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart2 },
   { label: 'Audit Log', href: '/admin/audit', icon: ClipboardList },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
