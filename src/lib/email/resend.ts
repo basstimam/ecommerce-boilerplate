@@ -1,9 +1,8 @@
-import { Resend } from 'resend'
-import { serverEnv, publicEnv } from '@/lib/env'
+import { sendEmail } from '@/lib/email/mailer'
 
-export const resend = new Resend(serverEnv.RESEND_API_KEY)
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
-export const FROM_EMAIL = `${publicEnv.NEXT_PUBLIC_STORE_NAME} <${serverEnv.RESEND_FROM_EMAIL}>`
+const formatPence = (p: number) => `£${(p / 100).toFixed(2)}`
 
 export async function sendOrderConfirmationEmail({
   to,
@@ -20,10 +19,11 @@ export async function sendOrderConfirmationEmail({
   totalPence: number
   orderId: string
 }) {
-  const formatPence = (p: number) => `£${(p / 100).toFixed(2)}`
-
   const itemRows = items
-    .map((i) => `<tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6">${i.name}</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;text-align:center">${i.quantity}</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;text-align:right">${formatPence(i.totalPence)}</td></tr>`)
+    .map(
+      (i) =>
+        `<tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6">${i.name}</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;text-align:center">${i.quantity}</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;text-align:right">${formatPence(i.totalPence)}</td></tr>`,
+    )
     .join('')
 
   const html = `<!DOCTYPE html>
@@ -38,12 +38,10 @@ export async function sendOrderConfirmationEmail({
       <h2 style="font-size:22px;color:#111827;margin-top:0">Order Confirmed!</h2>
       <p style="color:#6b7280">Hi ${customerName},</p>
       <p style="color:#6b7280">Thank you for your order. We've received your order and will start processing it shortly.</p>
-
       <div style="background:#f9fafb;border-radius:8px;padding:16px;margin:24px 0">
         <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Order Reference</p>
         <p style="margin:0;font-size:16px;font-weight:bold;color:#111827">#${orderNumber}</p>
       </div>
-
       <table style="width:100%;border-collapse:collapse">
         <thead>
           <tr style="border-bottom:2px solid #e5e7eb">
@@ -60,15 +58,12 @@ export async function sendOrderConfirmationEmail({
           </tr>
         </tfoot>
       </table>
-
       <div style="margin-top:32px;text-align:center">
-        <a href="${publicEnv.NEXT_PUBLIC_APP_URL}/account/orders/${orderId}"
+        <a href="${APP_URL}/account/orders/${orderId}"
            style="background:#111827;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">
           View Order
         </a>
       </div>
-      </div>
-
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0">
       <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0">
         My Store · 123 High Street, London SW1A 1AA<br>
@@ -79,12 +74,7 @@ export async function sendOrderConfirmationEmail({
 </body>
 </html>`
 
-  return resend.emails.send({
-    from: FROM_EMAIL,
-    to,
-    subject: `Order Confirmed: #${orderNumber}`,
-    html,
-  })
+  return sendEmail({ to, subject: `Order Confirmed: #${orderNumber}`, html })
 }
 
 export async function sendShippingConfirmationEmail({
@@ -112,12 +102,15 @@ export async function sendShippingConfirmationEmail({
       <h2 style="color:#111827;margin-top:0">Your Order Is On Its Way!</h2>
       <p style="color:#6b7280">Hi ${customerName},</p>
       <p style="color:#6b7280">Great news! Your order <strong>#${orderNumber}</strong> has been shipped and is on its way to you.</p>
-      ${trackingNumber ? `
-      <div style="background:#f9fafb;border-radius:8px;padding:16px;margin:24px 0">
+      ${
+        trackingNumber
+          ? `<div style="background:#f9fafb;border-radius:8px;padding:16px;margin:24px 0">
         <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;text-transform:uppercase">Tracking Number</p>
         <p style="margin:0;font-size:16px;font-weight:bold;color:#111827">${trackingNumber}</p>
         ${trackingUrl ? `<a href="${trackingUrl}" style="color:#6b7280;font-size:13px">Track your parcel →</a>` : ''}
-      </div>` : ''}
+      </div>`
+          : ''
+      }
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0">
       <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0">My Store · support@mystore.co.uk</p>
     </div>
@@ -125,10 +118,5 @@ export async function sendShippingConfirmationEmail({
 </body>
 </html>`
 
-  return resend.emails.send({
-    from: FROM_EMAIL,
-    to,
-    subject: `Shipped: Your Order #${orderNumber} Is On Its Way`,
-    html,
-  })
+  return sendEmail({ to, subject: `Shipped: Your Order #${orderNumber} Is On Its Way`, html })
 }

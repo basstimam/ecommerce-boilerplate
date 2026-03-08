@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatGBPFromPence } from '@/lib/utils/currency'
-import { Plus, Tag } from 'lucide-react'
+import { Tag } from 'lucide-react'
 import { AdminDiscountActions } from './discount-actions'
 
 export const metadata = { title: 'Discount Codes' }
@@ -73,9 +73,12 @@ export default async function AdminDiscountsPage() {
             ))}
             {(discounts ?? []).length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center">
-                  <Tag className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-400">No discount codes yet</p>
+                <td colSpan={7} className="px-4 py-14 text-center">
+                  <Tag className="h-9 w-9 text-gray-200 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-gray-500">No discount codes yet</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Create codes to offer discounts to your customers
+                  </p>
                 </td>
               </tr>
             )}

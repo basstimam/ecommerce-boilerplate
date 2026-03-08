@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { ShoppingCart, Menu, X, User, LogOut, Package } from 'lucide-react'
+import { useCartStore } from '@/stores/cart'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import {
@@ -21,8 +22,13 @@ const navLinks = [
   { href: '/contact', label: 'Contact' },
 ]
 
-export function Navbar() {
+interface NavbarProps {
+  user: { email: string; fullName?: string | null } | null
+}
+
+export function Navbar({ user }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const totalItems = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
 
   const storeName = process.env.NEXT_PUBLIC_STORE_NAME ?? 'UK Store'
 
@@ -50,15 +56,17 @@ export function Navbar() {
             <Link href="/cart" aria-label="Shopping cart">
               <div className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                <Badge className="absolute -right-2 -top-2 h-4 w-4 items-center justify-center rounded-full p-0 text-[10px]">
-                  0
-                </Badge>
+                {totalItems > 0 && (
+                  <Badge className="absolute -right-2 -top-2 h-4 w-4 items-center justify-center rounded-full p-0 text-[10px]">
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </Badge>
+                )}
               </div>
             </Link>
           </Button>
 
           <div className="hidden md:block">
-            <GuestMenu />
+            {user ? <UserMenu email={user.email} fullName={user.fullName} /> : <GuestMenu />}
           </div>
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -86,20 +94,46 @@ export function Navbar() {
                   </Link>
                 ))}
                 <div className="mt-4 border-t pt-4">
-                  <Link
-                    href="/login"
-                    className="text-base font-medium"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="mt-2 block text-base font-medium"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Register
-                  </Link>
+                  {user ? (
+                    <>
+                      <Link
+                        href="/account"
+                        className="text-base font-medium"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        My Account
+                      </Link>
+                      <Link
+                        href="/account/orders"
+                        className="mt-2 block text-base font-medium"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        My Orders
+                      </Link>
+                      <form action="/auth/signout" method="POST" className="mt-2">
+                        <button type="submit" className="text-base font-medium text-destructive">
+                          Logout
+                        </button>
+                      </form>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        className="text-base font-medium"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        href="/register"
+                        className="mt-2 block text-base font-medium"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Register
+                      </Link>
+                    </>
+                  )}
                 </div>
               </nav>
             </SheetContent>
@@ -166,9 +200,11 @@ export function UserMenu({ email, fullName }: UserMenuProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-destructive">
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
+        <DropdownMenuItem asChild className="text-destructive">
+          <Link href="/auth/signout">
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

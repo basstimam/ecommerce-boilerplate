@@ -44,9 +44,9 @@ export async function GET(
     const { renderToBuffer } = await import('@react-pdf/renderer')
     const { InvoiceDocument } = await import('@/lib/pdf/invoice')
 
-    const pdf = await renderToBuffer(InvoiceDocument({ order }))
+    const pdf = await renderToBuffer(InvoiceDocument({ order: order as unknown as Parameters<typeof InvoiceDocument>[0]['order'] }))
 
-    return new NextResponse(pdf, {
+    return new NextResponse(new Uint8Array(pdf), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="invoice-${order.order_number ?? order.id.slice(0, 8)}.pdf"`,

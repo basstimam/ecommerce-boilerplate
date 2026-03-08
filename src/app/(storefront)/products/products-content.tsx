@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { SlidersHorizontal, X } from 'lucide-react'
+import Image from 'next/image'
+import { SlidersHorizontal, X, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,15 +22,6 @@ import {
 } from '@/components/ui/select'
 import { formatGBPFromPence } from '@/lib/utils/currency'
 
-const CATEGORIES = [
-  { label: 'Clothing', value: 'clothing' },
-  { label: 'Electronics', value: 'electronics' },
-  { label: 'Home & Garden', value: 'home-garden' },
-  { label: 'Sports', value: 'sports' },
-  { label: 'Books', value: 'books' },
-  { label: 'Toys', value: 'toys' },
-]
-
 const SORT_OPTIONS = [
   { label: 'Featured', value: 'featured' },
   { label: 'Newest', value: 'newest' },
@@ -37,60 +29,97 @@ const SORT_OPTIONS = [
   { label: 'Price: High to Low', value: 'price_desc' },
 ]
 
-const PLACEHOLDER_PRODUCTS = Array.from({ length: 12 }).map((_, i) => ({
-  id: String(i + 1),
-  name: `Product ${i + 1}`,
-  slug: `product-${i + 1}`,
-  price_pence: 999 + i * 500,
-  compare_at_price_pence: i % 3 === 0 ? 1999 + i * 500 : null,
-  price_includes_vat: true,
-  image_url: null as string | null,
-  is_active: true,
-  stock_quantity: i % 5 === 0 ? 0 : 10,
-}))
+interface ProductData {
+  id: string
+  name: string
+  slug: string
+  price_pence: number
+  compare_at_price_pence: number | null
+  images: string[]
+  stock_quantity: number
+  is_featured: boolean
+  created_at: string
+  category_id: string | null
+}
 
-const PAGE_SIZE = 12
+interface CategoryOption {
+  label: string
+  value: string
+}
 
-export function ProductsContent() {
-  const searchParams = useSearchParams()
+interface ActiveFilters {
+  category: string
+  sort: string
+  minPrice: string
+  maxPrice: string
+  inStock: boolean
+  q: string
+}
+
+interface ProductsContentProps {
+  products: ProductData[]
+  categories: CategoryOption[]
+  totalCount: number
+  currentPage: number
+  totalPages: number
+  activeFilters: ActiveFilters
+}
+
+export function ProductsContent({
+  products,
+  categories,
+  totalCount,
+  currentPage,
+  totalPages,
+  activeFilters,
+}: ProductsContentProps) {
   const router = useRouter()
-
-  const category = searchParams.get('category') ?? ''
-  const sort = searchParams.get('sort') ?? 'featured'
-  const minPrice = searchParams.get('min_price') ?? ''
-  const maxPrice = searchParams.get('max_price') ?? ''
-  const inStock = searchParams.get('in_stock') === 'true'
-  const page = Number(searchParams.get('page') ?? '1')
+  const { category, sort, minPrice, maxPrice, inStock, q } = activeFilters
 
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState(q)
 
   const updateParam = useCallback(
     (key: string, value: string | null) => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams()
+
+      const currentFilters: Record<string, string> = {}
+      if (category) currentFilters.category = category
+      if (sort && sort !== 'featured') currentFilters.sort = sort
+      if (minPrice) currentFilters.min_price = minPrice
+      if (maxPrice) currentFilters.max_price = maxPrice
+      if (inStock) currentFilters.in_stock = 'true'
+      if (q) currentFilters.q = q
+
+      Object.entries(currentFilters).forEach(([k, v]) => params.set(k, v))
+
       if (value === null || value === '') {
         params.delete(key)
       } else {
         params.set(key, value)
       }
+
       if (key !== 'page') params.delete('page')
-      router.push(`/products?${params.toString()}`)
+
+      const qs = params.toString()
+      router.push(qs ? `/products?${qs}` : '/products')
     },
-    [searchParams, router]
+    [category, sort, minPrice, maxPrice, inStock, q, router]
   )
 
   const clearFilters = useCallback(() => {
     router.push('/products')
   }, [router])
 
-  const hasActiveFilters = category || minPrice || maxPrice || inStock
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      updateParam('q', searchValue || null)
+    },
+    [searchValue, updateParam]
+  )
 
-  const filtered = PLACEHOLDER_PRODUCTS
-    .filter((p) => !inStock || p.stock_quantity > 0)
-    .filter((p) => !minPrice || p.price_pence >= Number(minPrice) * 100)
-    .filter((p) => !maxPrice || p.price_pence <= Number(maxPrice) * 100)
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const hasActiveFilters = category || minPrice || maxPrice || inStock || q
 
   const FiltersPanel = (
     <div className="flex flex-col gap-6">
@@ -106,7 +135,7 @@ export function ProductsContent() {
           Category
         </p>
         <div className="flex flex-col gap-2">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <div key={cat.value} className="flex items-center gap-2">
               <Checkbox
                 id={`cat-${cat.value}`}
@@ -127,24 +156,30 @@ export function ProductsContent() {
 
       <div>
         <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Price Range (£)
+          Price Range (&pound;)
         </p>
         <div className="flex items-center gap-2">
           <Input
             type="number"
             placeholder="Min"
-            value={minPrice}
+            defaultValue={minPrice}
             min={0}
-            onChange={(e) => updateParam('min_price', e.target.value)}
+            onBlur={(e) => updateParam('min_price', e.target.value || null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') updateParam('min_price', e.currentTarget.value || null)
+            }}
             className="h-8 w-20 text-sm"
           />
-          <span className="text-muted-foreground">–</span>
+          <span className="text-muted-foreground">&ndash;</span>
           <Input
             type="number"
             placeholder="Max"
-            value={maxPrice}
+            defaultValue={maxPrice}
             min={0}
-            onChange={(e) => updateParam('max_price', e.target.value)}
+            onBlur={(e) => updateParam('max_price', e.target.value || null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') updateParam('max_price', e.currentTarget.value || null)
+            }}
             className="h-8 w-20 text-sm"
           />
         </div>
@@ -167,13 +202,26 @@ export function ProductsContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">All Products</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} products</p>
+          <p className="text-sm text-muted-foreground">
+            {totalCount} {totalCount === 1 ? 'product' : 'products'}
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <form onSubmit={handleSearch} className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search products..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="h-9 w-48 pl-8 text-sm"
+            />
+          </form>
+
           <Select value={sort} onValueChange={(v) => updateParam('sort', v)}>
             <SelectTrigger className="w-44">
               <SelectValue />
@@ -209,9 +257,17 @@ export function ProductsContent() {
 
       {hasActiveFilters && (
         <div className="mb-4 flex flex-wrap gap-2">
+          {q && (
+            <Badge variant="secondary" className="gap-1">
+              Search: &ldquo;{q}&rdquo;
+              <button onClick={() => { setSearchValue(''); updateParam('q', null) }} aria-label="Remove search filter">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
           {category && (
             <Badge variant="secondary" className="gap-1">
-              {CATEGORIES.find((c) => c.value === category)?.label ?? category}
+              {categories.find((c) => c.value === category)?.label ?? category}
               <button onClick={() => updateParam('category', null)} aria-label="Remove category filter">
                 <X className="h-3 w-3" />
               </button>
@@ -219,11 +275,11 @@ export function ProductsContent() {
           )}
           {(minPrice || maxPrice) && (
             <Badge variant="secondary" className="gap-1">
-              £{minPrice || '0'} – £{maxPrice || '∞'}
+              &pound;{minPrice || '0'} &ndash; &pound;{maxPrice || '\u221E'}
               <button
                 onClick={() => {
                   updateParam('min_price', null)
-                  updateParam('max_price', null)
+                  setTimeout(() => updateParam('max_price', null), 0)
                 }}
                 aria-label="Remove price filter"
               >
@@ -246,7 +302,7 @@ export function ProductsContent() {
         <aside className="hidden lg:block">{FiltersPanel}</aside>
 
         <div className="lg:col-span-3">
-          {paginated.length === 0 ? (
+          {products.length === 0 ? (
             <div className="py-24 text-center">
               <p className="text-lg font-medium">No products found</p>
               <p className="mt-1 text-sm text-muted-foreground">Try adjusting your filters</p>
@@ -256,14 +312,14 @@ export function ProductsContent() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {paginated.map((product) => (
+              {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
 
           {totalPages > 1 && (
-            <Pagination page={page} totalPages={totalPages} onPageChange={(p) => updateParam('page', String(p))} />
+            <Pagination page={currentPage} totalPages={totalPages} onPageChange={(p) => updateParam('page', String(p))} />
           )}
         </div>
       </div>
@@ -278,14 +334,15 @@ interface ProductCardProps {
     slug: string
     price_pence: number
     compare_at_price_pence: number | null
-    price_includes_vat: boolean
-    image_url: string | null
+    images: string[]
     stock_quantity: number
+    is_featured?: boolean
   }
 }
 
 function ProductCard({ product }: ProductCardProps) {
   const outOfStock = product.stock_quantity === 0
+  const imageUrl = product.images?.[0] ?? null
   const discountPercent = product.compare_at_price_pence
     ? Math.round(((product.compare_at_price_pence - product.price_pence) / product.compare_at_price_pence) * 100)
     : null
@@ -293,18 +350,21 @@ function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className={`group overflow-hidden border transition-all hover:shadow-md ${outOfStock ? 'opacity-70' : ''}`}>
       <Link href={`/products/${product.slug}`}>
-        <div className="relative aspect-square overflow-hidden bg-muted">
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-4xl text-muted-foreground/30">
-              🛍️
-            </div>
-          )}
+         <div className="relative aspect-square overflow-hidden bg-muted">
+           {imageUrl ? (
+             <Image
+               src={imageUrl}
+               alt={product.name}
+               width={400}
+               height={400}
+               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+               unoptimized
+             />
+           ) : (
+             <div className="flex h-full w-full items-center justify-center text-4xl text-muted-foreground/30">
+               🛍️
+             </div>
+           )}
 
           {outOfStock && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/60">
@@ -335,7 +395,7 @@ function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          {product.price_includes_vat ? 'inc. VAT' : 'exc. VAT'}
+          inc. VAT
         </p>
       </CardContent>
     </Card>

@@ -18,9 +18,11 @@ interface ShippingRate {
 interface ShippingZone {
   id: string
   name: string
-  zone_type: string
-  postcode_prefixes: string[]
-  rates: ShippingRate[]
+  description?: string | null
+  sort_order?: number
+  zone_type?: string
+  postcode_prefixes?: string[]
+  rates?: ShippingRate[]
   is_active: boolean
 }
 
@@ -65,7 +67,7 @@ export function ShippingZoneEditor({ zone }: { zone: ShippingZone }) {
           <div>
             <p className="font-semibold text-gray-900 text-left">{zone.name}</p>
             <p className="text-xs text-gray-500 text-left">
-              {zone.postcode_prefixes.join(', ')} · {(rates as ShippingRate[]).length} rate(s)
+              {(zone.postcode_prefixes ?? []).join(', ')} · {(rates as ShippingRate[]).length} rate(s)
             </p>
           </div>
         </div>

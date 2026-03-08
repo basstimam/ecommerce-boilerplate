@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { formatGBPFromPence } from '@/lib/utils/currency'
@@ -45,8 +46,8 @@ export default async function AdminOrderDetailPage({
     .eq('id', order.user_id)
     .single()
 
-  const items = (order.items as OrderItem[]) ?? []
-  const shippingAddress = order.shipping_address as ShippingAddress
+  const items = (order.items as unknown as OrderItem[]) ?? []
+  const shippingAddress = order.shipping_address as unknown as ShippingAddress
 
   const statusColor: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
@@ -97,7 +98,7 @@ export default async function AdminOrderDetailPage({
                 <li key={idx} className="flex items-center gap-4 p-4">
                   <div className="h-14 w-14 flex-shrink-0 rounded-lg bg-gray-100 overflow-hidden">
                     {item.image_url ? (
-                      <img src={item.image_url} alt={item.product_name} className="h-full w-full object-cover" />
+                      <Image src={item.image_url} alt={item.product_name} width={56} height={56} className="h-full w-full object-cover" unoptimized />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center">
                         <Package className="h-5 w-5 text-gray-300" />

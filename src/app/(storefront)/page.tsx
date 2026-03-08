@@ -1,95 +1,69 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, Shield, Truck, RefreshCw, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { NewsletterForm } from '@/components/shared/newsletter-form'
 import { formatGBPFromPence } from '@/lib/utils/currency'
+import { createAdminClient } from '@/lib/supabase/admin'
 
-const FEATURED_CATEGORIES = [
-  { name: 'Clothing', slug: 'clothing', description: 'Fashion for every occasion', emoji: '👕' },
-  { name: 'Electronics', slug: 'electronics', description: 'Gadgets & tech essentials', emoji: '💻' },
-  { name: 'Home & Garden', slug: 'home-garden', description: 'Make your space shine', emoji: '🏡' },
-  { name: 'Sports', slug: 'sports', description: 'Gear up and get active', emoji: '⚽' },
-]
-
-const FEATURED_PRODUCTS = [
-  {
-    id: '1',
-    name: 'Classic White Tee',
-    slug: 'classic-white-tee',
-    price_pence: 2499,
-    compare_at_price_pence: 3499,
-    price_includes_vat: true,
-    is_featured: true,
-    image_url: null as string | null,
-    badge: 'Bestseller',
-  },
-  {
-    id: '2',
-    name: 'Wireless Earbuds Pro',
-    slug: 'wireless-earbuds-pro',
-    price_pence: 7999,
-    compare_at_price_pence: null,
-    price_includes_vat: true,
-    is_featured: true,
-    image_url: null as string | null,
-    badge: 'New',
-  },
-  {
-    id: '3',
-    name: 'Ceramic Mug Set',
-    slug: 'ceramic-mug-set',
-    price_pence: 1999,
-    compare_at_price_pence: null,
-    price_includes_vat: true,
-    is_featured: true,
-    image_url: null as string | null,
-    badge: null,
-  },
-  {
-    id: '4',
-    name: 'Running Trainers',
-    slug: 'running-trainers',
-    price_pence: 8999,
-    compare_at_price_pence: 11999,
-    price_includes_vat: true,
-    is_featured: true,
-    image_url: null as string | null,
-    badge: 'Sale',
-  },
-]
+const CATEGORY_EMOJIS: Record<string, string> = {
+  clothing: '👕',
+  accessories: '👜',
+  footwear: '👟',
+  homeware: '🏡',
+}
 
 const TRUST_BADGES = [
-  {
-    icon: Truck,
-    title: 'Free UK Delivery',
-    description: 'On orders over £50',
-  },
-  {
-    icon: RefreshCw,
-    title: '30-Day Returns',
-    description: 'Hassle-free returns policy',
-  },
-  {
-    icon: Shield,
-    title: 'Secure Payments',
-    description: 'Protected by Stripe',
-  },
-  {
-    icon: Star,
-    title: 'Quality Guarantee',
-    description: 'Curated UK products',
-  },
+  { icon: Truck, title: 'Free UK Delivery', description: 'On orders over £50' },
+  { icon: RefreshCw, title: '30-Day Returns', description: 'Hassle-free returns policy' },
+  { icon: Shield, title: 'Secure Payments', description: 'Protected by Stripe' },
+  { icon: Star, title: 'Quality Guarantee', description: 'Curated UK products' },
 ]
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = createAdminClient()
+
+  const [{ data: featuredProducts }, { data: categories }] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id, name, slug, price_pence, compare_at_price_pence, images, tags')
+      .eq('is_featured', true)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(4),
+    supabase
+      .from('categories')
+      .select('id, name, slug, description')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .limit(4),
+  ])
+
+  const products = (featuredProducts ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    price_pence: p.price_pence,
+    compare_at_price_pence: p.compare_at_price_pence ?? null,
+    image_url: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
+    badge: null as string | null,
+  }))
+
+  const cats = (categories ?? []).map((c) => ({
+    name: c.name,
+    slug: c.slug,
+    description: c.description ?? 'Explore our range',
+    emoji: CATEGORY_EMOJIS[c.slug] ?? '🛍️',
+  }))
+
   return (
     <main className="flex flex-col">
       <HeroSection />
       <TrustBadges />
-      <FeaturedCategories />
-      <FeaturedProducts />
+      <FeaturedCategories categories={cats} />
+      <FeaturedProducts products={products} />
       <NewsletterSection />
     </main>
   )
@@ -168,7 +142,14 @@ function TrustBadges() {
   )
 }
 
-function FeaturedCategories() {
+interface Category {
+  name: string
+  slug: string
+  description: string
+  emoji: string
+}
+
+function FeaturedCategories({ categories }: { categories: Category[] }) {
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
@@ -178,7 +159,7 @@ function FeaturedCategories() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {FEATURED_CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <Link
               key={category.slug}
               href={`/products?category=${category.slug}`}
@@ -198,7 +179,17 @@ function FeaturedCategories() {
   )
 }
 
-function FeaturedProducts() {
+interface ProductCardData {
+  id: string
+  name: string
+  slug: string
+  price_pence: number
+  compare_at_price_pence: number | null
+  image_url: string | null
+  badge: string | null
+}
+
+function FeaturedProducts({ products }: { products: ProductCardData[] }) {
   return (
     <section className="bg-muted/30 py-16">
       <div className="container mx-auto px-4">
@@ -215,11 +206,17 @@ function FeaturedProducts() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURED_PRODUCTS.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <p className="text-center text-muted-foreground py-12">
+            No featured products yet. Check back soon!
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
 
         <div className="mt-8 text-center sm:hidden">
           <Button variant="outline" asChild>
@@ -234,20 +231,7 @@ function FeaturedProducts() {
   )
 }
 
-interface ProductCardProps {
-  product: {
-    id: string
-    name: string
-    slug: string
-    price_pence: number
-    compare_at_price_pence: number | null
-    price_includes_vat: boolean
-    image_url: string | null
-    badge: string | null
-  }
-}
-
-function ProductCard({ product }: ProductCardProps) {
+function ProductCard({ product }: { product: ProductCardData }) {
   const discountPercent =
     product.compare_at_price_pence
       ? Math.round(
@@ -259,14 +243,16 @@ function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card className="group overflow-hidden border transition-all hover:shadow-md">
-      {/* Image placeholder */}
       <Link href={`/products/${product.slug}`}>
         <div className="relative aspect-square overflow-hidden bg-muted">
           {product.image_url ? (
-            <img
+            <Image
               src={product.image_url}
               alt={product.name}
+              width={400}
+              height={400}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              unoptimized
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-5xl text-muted-foreground/30">
@@ -307,9 +293,7 @@ function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        <p className="mt-1 text-xs text-muted-foreground">
-          {product.price_includes_vat ? 'inc. VAT' : 'exc. VAT'}
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">inc. VAT</p>
       </CardContent>
     </Card>
   )

@@ -93,11 +93,14 @@ export default async function AdminDashboardPage() {
             </div>
             <p className="text-2xl font-bold text-gray-900">{value}</p>
             <div className="mt-1 flex items-center gap-1">
-              {change !== null && (
-                <span className={`flex items-center text-xs font-medium ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {change >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+              {change !== null && change !== 0 && (
+                <span className={`flex items-center text-xs font-medium ${change > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {change > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                   {Math.abs(change).toFixed(1)}%
                 </span>
+              )}
+              {change !== null && change === 0 && (
+                <span className="text-xs font-medium text-gray-400">—</span>
               )}
               <span className="text-xs text-gray-400">{sub}</span>
             </div>
@@ -119,24 +122,34 @@ export default async function AdminDashboardPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {(recentOrders ?? []).map((order) => (
-              <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 font-medium text-gray-900">
-                  #{order.order_number ?? order.id.slice(0, 8).toUpperCase()}
-                </td>
-                <td className="px-4 py-3 text-gray-500">
-                  {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColor[order.status] ?? 'bg-gray-100 text-gray-800'}`}>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right font-medium text-gray-900">
-                  {formatGBPFromPence(order.total_pence ?? 0)}
+            {(recentOrders ?? []).length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-4 py-12 text-center">
+                  <ShoppingBag className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-500">No orders yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Orders will appear here once customers start purchasing.</p>
                 </td>
               </tr>
-            ))}
+            ) : (
+              (recentOrders ?? []).map((order) => (
+                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 font-medium text-gray-900">
+                    #{order.order_number ?? order.id.slice(0, 8).toUpperCase()}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500">
+                    {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColor[order.status] ?? 'bg-gray-100 text-gray-800'}`}>
+                      {order.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium text-gray-900">
+                    {formatGBPFromPence(order.total_pence ?? 0)}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

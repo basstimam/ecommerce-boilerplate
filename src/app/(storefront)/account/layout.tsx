@@ -25,21 +25,21 @@ export default async function AccountLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-8 lg:flex-row">
           <aside className="lg:w-64">
-            <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-              <div className="mb-6 pb-6 border-b border-gray-100">
+            <div className="rounded-xl bg-card border p-6 shadow-sm">
+              <div className="mb-6 pb-6 border-b">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-white font-semibold text-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-sm shrink-0">
                     {user.email?.charAt(0).toUpperCase() ?? 'U'}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium truncate">
                       {user.user_metadata?.full_name ?? 'My Account'}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
               </div>
@@ -49,11 +49,11 @@ export default async function AccountLayout({
                   <AccountNavItem key={item.href} item={item} />
                 ))}
 
-                <div className="pt-4 border-t border-gray-100 mt-4">
+                <div className="pt-4 border-t mt-4">
                   <form action="/auth/signout" method="POST">
                     <button
                       type="submit"
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign Out
@@ -80,7 +80,7 @@ function AccountNavItem({
   return (
     <Link
       href={item.href}
-      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
     >
       <Icon className="h-4 w-4" />
       {item.label}

@@ -62,7 +62,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Invalid request. Required: code (string), subtotal_pence (number)' },
+        { status: 400 }
+      )
     }
     return NextResponse.json({ error: 'Failed to apply discount' }, { status: 500 })
   }

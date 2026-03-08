@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -55,19 +56,22 @@ export default function WishlistPage() {
         {items.map((item) => (
           <Card key={item.product_id} className="group overflow-hidden">
             <Link href={`/products/${item.slug}`}>
-              <div className="relative aspect-square overflow-hidden bg-muted">
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt={item.product_name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-5xl text-muted-foreground/20">
-                    🛍️
-                  </div>
-                )}
-              </div>
+             <div className="relative aspect-square overflow-hidden bg-muted">
+                 {item.image_url ? (
+                   <Image
+                     src={item.image_url}
+                     alt={item.product_name}
+                     width={400}
+                     height={400}
+                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                     unoptimized
+                   />
+                 ) : (
+                   <div className="flex h-full w-full items-center justify-center text-5xl text-muted-foreground/20">
+                     🛍️
+                   </div>
+                 )}
+               </div>
             </Link>
 
             <CardContent className="p-4">

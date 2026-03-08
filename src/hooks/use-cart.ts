@@ -10,6 +10,7 @@ export function useCart() {
 
   return {
     items: store.items,
+    isHydrated: store._hasHydrated,
     totalItems: store.getTotalItems(),
     subtotalPence: vat.subtotal_ex_vat_pence,
     vatPence: vat.total_vat_pence,

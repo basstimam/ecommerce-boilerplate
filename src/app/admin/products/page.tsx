@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { formatGBPFromPence } from '@/lib/utils/currency'
 import { Search, Plus, Package } from 'lucide-react'
@@ -103,15 +104,15 @@ export default async function AdminProductsPage({
                 <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-gray-100 overflow-hidden">
-                        {images[0] ? (
-                          <img src={images[0]} alt={product.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="h-full w-full flex items-center justify-center">
-                            <Package className="h-4 w-4 text-gray-300" />
-                          </div>
-                        )}
-                      </div>
+                       <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-gray-100 overflow-hidden">
+                         {images[0] ? (
+                           <Image src={images[0]} alt={product.name} width={40} height={40} className="h-full w-full object-cover" unoptimized />
+                         ) : (
+                           <div className="h-full w-full flex items-center justify-center">
+                             <Package className="h-4 w-4 text-gray-300" />
+                           </div>
+                         )}
+                       </div>
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900 truncate max-w-[200px]">{product.name}</p>
                         <p className="text-xs text-gray-400 truncate">{product.slug}</p>

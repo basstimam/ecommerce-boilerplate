@@ -5,8 +5,16 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import type { OrderStatus } from '@/types/database.types'
 
-const VALID_TRANSITIONS: Record<string, string[]> = {
+interface OrderData {
+  id: string
+  order_number: string | null
+  user_id: string
+  status: OrderStatus
+}
+
+const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
   pending: ['processing', 'cancelled'],
   processing: ['shipped', 'cancelled'],
   shipped: ['delivered'],
@@ -18,9 +26,11 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 export function AdminOrderActions({
   orderId,
   currentStatus,
+  orderData,
 }: {
   orderId: string
   currentStatus: string
+  orderData?: OrderData
 }) {
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
@@ -31,7 +41,7 @@ export function AdminOrderActions({
 
   if (nextStatuses.length === 0) return null
 
-  const updateStatus = async (status: string) => {
+  const updateStatus = async (status: OrderStatus) => {
     setLoading(true)
     setOpen(false)
     try {
@@ -41,6 +51,23 @@ export function AdminOrderActions({
         .eq('id', orderId)
 
       if (error) throw error
+
+      if (status === 'shipped' && orderData) {
+        try {
+          await fetch('/api/admin/orders/send-shipping-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId,
+              userId: orderData.user_id,
+              orderNumber: orderData.order_number,
+            }),
+          })
+        } catch (emailErr) {
+          console.error('Failed to send shipping email:', emailErr)
+        }
+      }
+
       toast.success(`Order status updated to ${status}`)
       router.refresh()
     } catch (err) {

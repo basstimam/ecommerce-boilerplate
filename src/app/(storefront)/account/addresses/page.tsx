@@ -8,6 +8,10 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { validateUKPostcode, formatPostcode } from '@/lib/utils/postcode'
 import { MapPin, Plus, Trash2, Star, Loader2, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const addressSchema = z.object({
   label: z.string().min(1, 'Label is required').max(50),
@@ -138,193 +142,210 @@ export default function AddressesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Saved Addresses</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage your delivery addresses for faster checkout.</p>
+          <h1 className="text-2xl font-bold">Saved Addresses</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage your delivery addresses for faster checkout.
+          </p>
         </div>
         {!showForm && (
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
+          <Button onClick={openAdd}>
+            <Plus className="mr-2 h-4 w-4" />
             Add Address
-          </button>
+          </Button>
         )}
       </div>
 
       {showForm && (
-        <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-900">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base">
               {editingId ? 'Edit Address' : 'Add New Address'}
-            </h2>
-            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+            </CardTitle>
+            <button
+              onClick={() => setShowForm(false)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Close form"
+            >
               <X className="h-5 w-5" />
             </button>
-          </div>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
-              <input
-                {...register('label')}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                placeholder="e.g. Home, Work"
-              />
-              {errors.label && <p className="mt-1 text-xs text-red-600">{errors.label.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input
-                  {...register('full_name')}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                  placeholder="John Smith"
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="label">Label</Label>
+                <Input
+                  id="label"
+                  {...register('label')}
+                  placeholder="e.g. Home, Work"
                 />
-                {errors.full_name && <p className="mt-1 text-xs text-red-600">{errors.full_name.message}</p>}
+                {errors.label && (
+                  <p className="text-xs text-destructive">{errors.label.message}</p>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
-                <input
-                  {...register('phone')}
-                  type="tel"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                  placeholder="+44 7700 000000"
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full Name</Label>
+                  <Input
+                    id="full_name"
+                    {...register('full_name')}
+                    placeholder="John Smith"
+                    autoComplete="name"
+                  />
+                  {errors.full_name && (
+                    <p className="text-xs text-destructive">{errors.full_name.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone (optional)</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    {...register('phone')}
+                    placeholder="+44 7700 000000"
+                    autoComplete="tel"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="line1">Address Line 1</Label>
+                <Input
+                  id="line1"
+                  {...register('line1')}
+                  placeholder="123 High Street"
+                  autoComplete="address-line1"
                 />
+                {errors.line1 && (
+                  <p className="text-xs text-destructive">{errors.line1.message}</p>
+                )}
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
-              <input
-                {...register('line1')}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                placeholder="123 High Street"
-              />
-              {errors.line1 && <p className="mt-1 text-xs text-red-600">{errors.line1.message}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2 (optional)</label>
-              <input
-                {...register('line2')}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                placeholder="Flat 4, Apartment B"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">City / Town</label>
-                <input
-                  {...register('city')}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                  placeholder="London"
-                />
-                {errors.city && <p className="mt-1 text-xs text-red-600">{errors.city.message}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">County (optional)</label>
-                <input
-                  {...register('county')}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                  placeholder="Greater London"
+              <div className="space-y-2">
+                <Label htmlFor="line2">Address Line 2 (optional)</Label>
+                <Input
+                  id="line2"
+                  {...register('line2')}
+                  placeholder="Flat 4, Apartment B"
+                  autoComplete="address-line2"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Postcode</label>
-                <input
-                  {...register('postcode')}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 uppercase"
-                  placeholder="SW1A 1AA"
-                  onBlur={(e) => setValue('postcode', formatPostcode(e.target.value))}
-                />
-                {errors.postcode && <p className="mt-1 text-xs text-red-600">{errors.postcode.message}</p>}
-              </div>
-            </div>
 
-            <div className="flex gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
-              >
-                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {editingId ? 'Update Address' : 'Save Address'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City / Town</Label>
+                  <Input
+                    id="city"
+                    {...register('city')}
+                    placeholder="London"
+                    autoComplete="address-level2"
+                  />
+                  {errors.city && (
+                    <p className="text-xs text-destructive">{errors.city.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="county">County (optional)</Label>
+                  <Input
+                    id="county"
+                    {...register('county')}
+                    placeholder="Greater London"
+                    autoComplete="address-level1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="postcode">Postcode</Label>
+                  <Input
+                    id="postcode"
+                    {...register('postcode')}
+                    placeholder="SW1A 1AA"
+                    autoComplete="postal-code"
+                    className="uppercase"
+                    onBlur={(e) => setValue('postcode', formatPostcode(e.target.value))}
+                  />
+                  {errors.postcode && (
+                    <p className="text-xs text-destructive">{errors.postcode.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button type="submit" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {editingId ? 'Update Address' : 'Save Address'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {fetchLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : addresses.length === 0 && !showForm ? (
-        <div className="rounded-xl bg-white border border-gray-100 shadow-sm">
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <MapPin className="h-10 w-10 text-gray-300 mb-3" />
-            <p className="text-sm font-medium text-gray-900 mb-1">No addresses saved</p>
-            <p className="text-sm text-gray-500">Add an address for faster checkout.</p>
-          </div>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <MapPin className="h-10 w-10 text-muted-foreground/30 mb-3" />
+            <p className="text-sm font-medium mb-1">No addresses saved</p>
+            <p className="text-sm text-muted-foreground">Add an address for faster checkout.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {addresses.map((addr) => (
-            <div
+            <Card
               key={addr.id}
-              className={`rounded-xl bg-white border shadow-sm p-5 ${addr.is_default ? 'border-gray-900' : 'border-gray-100'}`}
+              className={addr.is_default ? 'border-primary' : undefined}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-900">{addr.label}</span>
-                  {addr.is_default && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white">
-                      <Star className="h-3 w-3" />
-                      Default
-                    </span>
-                  )}
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">{addr.label}</span>
+                    {addr.is_default && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                        <Star className="h-3 w-3" />
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEdit(addr)}
+                      className="rounded px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteAddress(addr.id)}
+                      className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      aria-label="Delete address"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <address className="not-italic text-sm text-muted-foreground space-y-0.5">
+                  <p className="font-medium text-foreground">{addr.full_name}</p>
+                  <p>{addr.line1}</p>
+                  {addr.line2 && <p>{addr.line2}</p>}
+                  <p>{addr.city}{addr.county ? `, ${addr.county}` : ''}</p>
+                  <p>{addr.postcode}</p>
+                </address>
+                {!addr.is_default && (
                   <button
-                    onClick={() => openEdit(addr)}
-                    className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors text-xs"
+                    onClick={() => setDefault(addr.id)}
+                    className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Edit
+                    Set as default
                   </button>
-                  <button
-                    onClick={() => deleteAddress(addr.id)}
-                    className="rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              <address className="not-italic text-sm text-gray-600 space-y-0.5">
-                <p className="font-medium text-gray-900">{addr.full_name}</p>
-                <p>{addr.line1}</p>
-                {addr.line2 && <p>{addr.line2}</p>}
-                <p>{addr.city}{addr.county ? `, ${addr.county}` : ''}</p>
-                <p>{addr.postcode}</p>
-              </address>
-              {!addr.is_default && (
-                <button
-                  onClick={() => setDefault(addr.id)}
-                  className="mt-3 text-xs text-gray-500 hover:text-gray-900 transition-colors"
-                >
-                  Set as default
-                </button>
-              )}
-            </div>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

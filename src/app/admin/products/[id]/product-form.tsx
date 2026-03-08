@@ -2,25 +2,25 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { generateSlug } from '@/lib/utils/slug'
+import { slugify } from '@/lib/utils/slug'
 import { Loader2, Trash2 } from 'lucide-react'
 
 const productSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   slug: z.string().min(2, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug: lowercase, numbers, hyphens only'),
   description: z.string().optional(),
-  price_pence: z.number({ coerce: true }).min(1, 'Price is required'),
-  compare_at_price_pence: z.number({ coerce: true }).optional(),
+  price_pence: z.number().min(1, 'Price is required'),
+  compare_at_price_pence: z.number().optional(),
   sku: z.string().optional(),
-  stock_quantity: z.number({ coerce: true }).min(0).default(0),
+  stock_quantity: z.number().min(0).default(0),
   is_active: z.boolean().default(true),
-  vat_rate: z.number({ coerce: true }).default(20),
-  weight_grams: z.number({ coerce: true }).optional(),
+  vat_rate: z.number().default(20),
+  weight_grams: z.number().optional(),
   category_id: z.string().optional(),
   short_description: z.string().optional(),
 })
@@ -53,10 +53,9 @@ export function ProductForm({ product }: { product: ProductRecord | null }) {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as unknown as Resolver<ProductFormData>,
     defaultValues: product
       ? {
           name: product.name,
@@ -73,8 +72,6 @@ export function ProductForm({ product }: { product: ProductRecord | null }) {
         }
       : { is_active: true, stock_quantity: 0, vat_rate: 20 },
   })
-
-  const nameValue = watch('name')
 
   const onSubmit = async (data: ProductFormData) => {
     setLoading(true)
@@ -138,7 +135,7 @@ export function ProductForm({ product }: { product: ProductRecord | null }) {
             placeholder="e.g. Premium Leather Wallet"
             onChange={(e) => {
               register('name').onChange(e)
-              if (!product) setValue('slug', generateSlug(e.target.value))
+              if (!product) setValue('slug', slugify(e.target.value))
             }}
           />
           {errors.name && <p className={errorClass}>{errors.name.message}</p>}

@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { generateSlug } from '@/lib/utils/slug'
+import { slugify } from '@/lib/utils/slug'
 import { Loader2, Trash2 } from 'lucide-react'
 
 const pageSchema = z.object({
@@ -38,7 +38,7 @@ export function CmsPageForm({ page }: { page: CmsPage | null }) {
   const [deleting, setDeleting] = useState(false)
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<PageForm>({
-    resolver: zodResolver(pageSchema),
+    resolver: zodResolver(pageSchema) as unknown as Resolver<PageForm>,
     defaultValues: page
       ? {
           title: page.title,
@@ -104,7 +104,7 @@ export function CmsPageForm({ page }: { page: CmsPage | null }) {
             placeholder="About Us"
             onChange={(e) => {
               register('title').onChange(e)
-              if (!page) setValue('slug', generateSlug(e.target.value))
+              if (!page) setValue('slug', slugify(e.target.value))
             }}
           />
           {errors.title && <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>}

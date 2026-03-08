@@ -22,11 +22,11 @@ export default async function AdminShippingPage() {
 
       {!zones || zones.length === 0 ? (
         <div className="rounded-xl bg-white border border-gray-100 shadow-sm">
-          <div className="flex flex-col items-center justify-center py-16">
-            <Truck className="h-10 w-10 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-400 mb-4">No shipping zones configured</p>
-            <p className="text-xs text-gray-400 max-w-sm text-center">
-              Run <code className="bg-gray-100 px-1 rounded">supabase/seed.sql</code> to add default UK shipping zones, or add zones below.
+          <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+            <Truck className="h-10 w-10 text-gray-200 mb-3" />
+            <p className="text-sm font-medium text-gray-500 mb-1">No shipping zones configured</p>
+            <p className="text-xs text-gray-400 max-w-xs">
+              Run <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono">supabase/seed.sql</code> to seed default UK shipping zones, or create them manually.
             </p>
           </div>
         </div>

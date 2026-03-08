@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -12,18 +12,25 @@ import { Plus, X, Loader2 } from 'lucide-react'
 const discountSchema = z.object({
   code: z.string().min(3, 'Code must be at least 3 characters').toUpperCase(),
   type: z.enum(['percentage', 'fixed_amount', 'free_shipping']),
-  value: z.number({ coerce: true }).min(0),
-  usage_limit: z.number({ coerce: true }).optional(),
+  value: z.number().min(0),
+  usage_limit: z.number().optional(),
   expires_at: z.string().optional(),
-  min_order_pence: z.number({ coerce: true }).optional(),
+  min_order_pence: z.number().optional(),
   is_active: z.boolean().default(true),
 })
 
 type DiscountForm = z.infer<typeof discountSchema>
 
-interface DiscountRecord extends DiscountForm {
+interface DiscountRecord {
   id: string
-  usage_count?: number
+  code: string
+  type: 'percentage' | 'fixed_amount' | 'free_shipping'
+  value: number
+  usage_limit: number | null
+  usage_count: number
+  min_order_pence: number | null
+  expires_at: string | null
+  is_active: boolean
 }
 
 export function AdminDiscountActions({
@@ -39,9 +46,17 @@ export function AdminDiscountActions({
   const supabase = createClient()
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<DiscountForm>({
-    resolver: zodResolver(discountSchema),
+    resolver: zodResolver(discountSchema) as unknown as Resolver<DiscountForm>,
     defaultValues: discount
-      ? { ...discount, expires_at: discount.expires_at ? new Date(discount.expires_at).toISOString().split('T')[0] : '' }
+      ? {
+          code: discount.code,
+          type: discount.type,
+          value: discount.value,
+          is_active: discount.is_active,
+          usage_limit: discount.usage_limit ?? undefined,
+          min_order_pence: discount.min_order_pence ?? undefined,
+          expires_at: discount.expires_at ? new Date(discount.expires_at).toISOString().split('T')[0] : '',
+        }
       : { type: 'percentage', value: 10, is_active: true },
   })
 

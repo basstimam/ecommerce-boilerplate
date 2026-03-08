@@ -9,7 +9,15 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 
 export default function CartPage() {
-  const { items, isEmpty, totalItems, subtotalPence, vatPence, totalPence, removeItem, updateQuantity } = useCart()
+  const { items, isEmpty, isHydrated, totalItems, subtotalPence, vatPence, totalPence, removeItem, updateQuantity } = useCart()
+
+  if (!isHydrated) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
+  }
 
   if (isEmpty) {
     return (

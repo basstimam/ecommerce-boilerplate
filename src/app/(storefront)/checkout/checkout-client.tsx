@@ -91,7 +91,6 @@ export function CheckoutClient() {
   const effectiveShippingPence = appliedDiscount?.is_free_shipping
     ? 0
     : (selectedShipping?.price_pence ?? 0)
-  const shippingPence = selectedShipping?.price_pence ?? 0
   const totalPence = Math.max(
     0,
     vatSummary.total_inc_vat_pence + effectiveShippingPence - (appliedDiscount?.discount_pence ?? 0)

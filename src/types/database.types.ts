@@ -22,40 +22,34 @@ export interface Database {
       profiles: {
         Row: {
           id: string
-          email: string
           full_name: string | null
           role: UserRole
           phone: string | null
           marketing_consent: boolean
           marketing_consent_at: string | null
           email_verified: boolean
-          gdpr_data_retention_days: number
           created_at: string
           updated_at: string
         }
         Insert: {
           id: string
-          email: string
           full_name?: string | null
           role?: UserRole
           phone?: string | null
           marketing_consent?: boolean
           marketing_consent_at?: string | null
           email_verified?: boolean
-          gdpr_data_retention_days?: number
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
-          email?: string
           full_name?: string | null
           role?: UserRole
           phone?: string | null
           marketing_consent?: boolean
           marketing_consent_at?: string | null
           email_verified?: boolean
-          gdpr_data_retention_days?: number
           updated_at?: string
         }
         Relationships: []
@@ -64,6 +58,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          label: string
           full_name: string
           line1: string
           line2: string | null
@@ -79,6 +74,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          label?: string
           full_name: string
           line1: string
           line2?: string | null
@@ -92,6 +88,7 @@ export interface Database {
           updated_at?: string
         }
         Update: {
+          label?: string
           full_name?: string
           line1?: string
           line2?: string | null
@@ -163,6 +160,7 @@ export interface Database {
           weight_grams: number | null
           dimensions: Record<string, number> | null
           is_active: boolean
+          images: string[]
           is_featured: boolean
           tags: string[]
           meta_title: string | null
@@ -189,6 +187,7 @@ export interface Database {
           allow_backorder?: boolean
           weight_grams?: number | null
           dimensions?: Record<string, number> | null
+          images?: string[]
           is_active?: boolean
           is_featured?: boolean
           tags?: string[]
@@ -215,6 +214,7 @@ export interface Database {
           allow_backorder?: boolean
           weight_grams?: number | null
           dimensions?: Record<string, number> | null
+          images?: string[]
           is_active?: boolean
           is_featured?: boolean
           tags?: string[]
@@ -284,12 +284,45 @@ export interface Database {
         }
         Relationships: []
       }
+      product_reviews: {
+        Row: {
+          id: string
+          product_id: string
+          user_id: string
+          rating: number
+          title: string | null
+          body: string | null
+          is_verified: boolean
+          is_approved: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          user_id: string
+          rating: number
+          title?: string | null
+          body?: string | null
+          is_verified?: boolean
+          is_approved?: boolean
+          created_at?: string
+        }
+        Update: {
+          rating?: number
+          title?: string | null
+          body?: string | null
+          is_verified?: boolean
+          is_approved?: boolean
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           id: string
           order_number: string
           user_id: string
           status: OrderStatus
+          items: Array<Record<string, unknown>>
           shipping_address: Record<string, unknown>
           billing_address: Record<string, unknown> | null
           subtotal_pence: number
@@ -301,6 +334,7 @@ export interface Database {
           stripe_charge_id: string | null
           discount_id: string | null
           discount_code: string | null
+          shipping_method: string | null
           notes: string | null
           status_history: Array<Record<string, unknown>>
           created_at: string
@@ -311,6 +345,7 @@ export interface Database {
           order_number?: string
           user_id: string
           status?: OrderStatus
+          items?: Array<Record<string, unknown>>
           shipping_address: Record<string, unknown>
           billing_address?: Record<string, unknown> | null
           subtotal_pence: number
@@ -322,6 +357,7 @@ export interface Database {
           stripe_charge_id?: string | null
           discount_id?: string | null
           discount_code?: string | null
+          shipping_method?: string | null
           notes?: string | null
           status_history?: Array<Record<string, unknown>>
           created_at?: string
@@ -329,10 +365,12 @@ export interface Database {
         }
         Update: {
           status?: OrderStatus
+          items?: Array<Record<string, unknown>>
           shipping_pence?: number
           discount_pence?: number
           stripe_payment_intent_id?: string | null
           stripe_charge_id?: string | null
+          shipping_method?: string | null
           notes?: string | null
           status_history?: Array<Record<string, unknown>>
           updated_at?: string
@@ -372,6 +410,46 @@ export interface Database {
         }
         Update: {
           quantity?: number
+        }
+        Relationships: []
+      }
+      discount_codes: {
+        Row: {
+          id: string
+          code: string
+          type: 'percentage' | 'fixed_amount' | 'free_shipping'
+          value: number
+          value_pence: number | null
+          usage_limit: number | null
+          usage_count: number
+          min_order_pence: number | null
+          expires_at: string | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          type: 'percentage' | 'fixed_amount' | 'free_shipping'
+          value?: number
+          value_pence?: number | null
+          usage_limit?: number | null
+          usage_count?: number
+          min_order_pence?: number | null
+          expires_at?: string | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          code?: string
+          type?: 'percentage' | 'fixed_amount' | 'free_shipping'
+          value?: number
+          value_pence?: number | null
+          usage_limit?: number | null
+          usage_count?: number
+          min_order_pence?: number | null
+          expires_at?: string | null
+          is_active?: boolean
         }
         Relationships: []
       }
@@ -713,6 +791,40 @@ export interface Database {
         }
         Relationships: []
       }
+      cms_pages: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          content: string | null
+          meta_title: string | null
+          meta_description: string | null
+          is_published: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          title: string
+          content?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          is_published?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          slug?: string
+          title?: string
+          content?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          is_published?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           id: string
@@ -764,6 +876,37 @@ export interface Database {
         }
         Update: {
           pdf_url?: string | null
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          id: string
+          user_id: string | null
+          action: string
+          table_name: string
+          record_id: string | null
+          changes: Record<string, unknown> | null
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          action: string
+          table_name: string
+          record_id?: string | null
+          changes?: Record<string, unknown> | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          action?: string
+          table_name?: string
+          record_id?: string | null
+          changes?: Record<string, unknown> | null
         }
         Relationships: []
       }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -16,7 +16,7 @@ const settingsSchema = z.object({
   address_line1: z.string().min(1),
   address_city: z.string().min(1),
   address_postcode: z.string().min(1),
-  free_shipping_threshold_pence: z.number({ coerce: true }).min(0),
+  free_shipping_threshold_pence: z.number().min(0),
   order_email_from: z.string().email(),
 })
 
@@ -39,11 +39,11 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false)
 
   const { register, handleSubmit, formState: { errors } } = useForm<SettingsForm>({
-    resolver: zodResolver(settingsSchema),
+    resolver: zodResolver(settingsSchema) as unknown as Resolver<SettingsForm>,
     defaultValues: DEFAULTS,
   })
 
-  const onSubmit = async (_data: SettingsForm) => {
+  const onSubmit = async (): Promise<void> => {
     setLoading(true)
     await new Promise((r) => setTimeout(r, 600))
     toast.success('Settings saved', { description: 'Connect a settings table in Supabase to persist these.' })

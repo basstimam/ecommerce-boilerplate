@@ -42,9 +42,12 @@ export default async function AdminNewsletterPage({
 
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
         {!subscribers || subscribers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Mail className="h-10 w-10 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-400">No subscribers yet</p>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Mail className="h-10 w-10 text-gray-200 mb-3" />
+            <p className="text-sm font-medium text-gray-500">No subscribers yet</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Subscribers collected from the storefront newsletter form will appear here
+            </p>
           </div>
         ) : (
           <table className="w-full text-sm">

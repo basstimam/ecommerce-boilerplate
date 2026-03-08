@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { formatGBPFromPence } from '@/lib/utils/currency'
@@ -54,8 +55,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   if (!order) notFound()
 
-  const items = (order.items as OrderItem[]) ?? []
-  const shippingAddress = order.shipping_address as ShippingAddress
+  const items = (order.items as unknown as OrderItem[]) ?? []
+  const shippingAddress = order.shipping_address as unknown as ShippingAddress
   const currentStep = statusSteps.indexOf(order.status)
 
   return (
@@ -128,15 +129,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <ul className="divide-y divide-gray-100">
           {items.map((item, idx) => (
             <li key={idx} className="flex items-center gap-4 p-4">
-              <div className="h-16 w-16 flex-shrink-0 rounded-lg bg-gray-100 overflow-hidden">
-                {item.image_url ? (
-                  <img src={item.image_url} alt={item.product_name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center">
-                    <Package className="h-6 w-6 text-gray-300" />
-                  </div>
-                )}
-              </div>
+               <div className="h-16 w-16 flex-shrink-0 rounded-lg bg-gray-100 overflow-hidden">
+                 {item.image_url ? (
+                   <Image src={item.image_url} alt={item.product_name} width={64} height={64} className="h-full w-full object-cover" unoptimized />
+                 ) : (
+                   <div className="h-full w-full flex items-center justify-center">
+                     <Package className="h-6 w-6 text-gray-300" />
+                   </div>
+                 )}
+               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900">{item.product_name}</p>
                 {item.variant_options && Object.keys(item.variant_options).length > 0 && (

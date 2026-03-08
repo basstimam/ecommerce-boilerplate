@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { verifyStripeWebhook } from '@/lib/stripe/webhooks'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendOrderConfirmationEmail } from '@/lib/email/resend'
 
 export const runtime = 'nodejs'
 
@@ -60,16 +61,57 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
   if (existing) return
 
-  await supabase.from('orders').insert({
-    user_id: userId,
-    status: 'processing',
-    stripe_payment_intent_id: paymentIntent.id,
-    shipping_address: {},
-    subtotal_pence: paymentIntent.amount,
-    vat_pence: 0,
-    total_pence: paymentIntent.amount,
-    notes: JSON.stringify({ shipping_rate_id: paymentIntent.metadata?.shipping_rate_id }),
-  })
+  const { data: newOrder, error: insertError } = await supabase
+    .from('orders')
+    .insert({
+      user_id: userId,
+      status: 'processing',
+      stripe_payment_intent_id: paymentIntent.id,
+      shipping_address: {},
+      subtotal_pence: paymentIntent.amount,
+      vat_pence: 0,
+      total_pence: paymentIntent.amount,
+      notes: JSON.stringify({ shipping_rate_id: paymentIntent.metadata?.shipping_rate_id }),
+    })
+    .select()
+    .single()
+
+  if (insertError || !newOrder) {
+    console.error('Failed to insert order:', insertError)
+    return
+  }
+
+  // Fetch customer profile and auth user for email
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', userId)
+    .single()
+
+  const { data: { user: authUser } } = await supabase.auth.admin.getUserById(userId)
+
+  if (authUser?.email) {
+    // Parse items from metadata if available
+    const items = JSON.parse(paymentIntent.metadata?.items ?? '[]')
+
+    try {
+      await sendOrderConfirmationEmail({
+        to: authUser.email,
+        orderNumber: newOrder.order_number ?? paymentIntent.id,
+        customerName: profile?.full_name ?? 'Customer',
+        items: (items as Array<{ product_name: string; quantity: number; total_price_pence: number }>).map((i) => ({
+          name: i.product_name,
+          quantity: i.quantity,
+          totalPence: i.total_price_pence,
+        })),
+        totalPence: paymentIntent.amount,
+        orderId: newOrder.id,
+      })
+    } catch (emailErr) {
+      console.error('Failed to send order confirmation email:', emailErr)
+      // Don't throw — email failure shouldn't fail the webhook
+    }
+  }
 }
 
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {

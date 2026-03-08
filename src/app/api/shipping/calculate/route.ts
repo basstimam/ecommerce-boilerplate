@@ -20,6 +20,10 @@ const bodySchema = z.object({
     .default([]),
 })
 
+export async function GET() {
+  return NextResponse.json({ error: 'Method not allowed. Use POST.' }, { status: 405 })
+}
+
 export async function POST(request: NextRequest) {
   let body: unknown
   try {

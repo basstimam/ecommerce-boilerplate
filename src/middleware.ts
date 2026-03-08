@@ -27,7 +27,8 @@ function isAuthOnly(pathname: string) {
   return AUTH_ONLY_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'))
 }
 
-function checkRateLimit(ip: string, pathname: string): boolean {
+function checkRateLimit(ip: string, pathname: string, method: string): boolean {
+  if (method !== 'POST') return false
   const rule = RATE_LIMITED_ROUTES.find((r) => r.pattern.test(pathname))
   if (!rule) return false
 
@@ -54,7 +55,7 @@ export async function middleware(request: NextRequest) {
     request.headers.get('x-real-ip') ??
     'unknown'
 
-  if (checkRateLimit(ip, pathname)) {
+  if (checkRateLimit(ip, pathname, request.method)) {
     return new NextResponse('Too Many Requests', {
       status: 429,
       headers: { 'Retry-After': '60' },
@@ -64,8 +65,30 @@ export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request)
 
   if (isAuthOnly(pathname) && user) {
+    const supabaseForProfile = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          },
+        },
+      }
+    )
+
+    const { data: profileData } = await supabaseForProfile
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const profile = profileData as { role: UserRole } | null
     const url = request.nextUrl.clone()
-    url.pathname = '/account'
+    url.pathname = (profile?.role === 'admin' || profile?.role === 'super_admin') ? '/admin' : '/account'
     return NextResponse.redirect(url)
   }
 

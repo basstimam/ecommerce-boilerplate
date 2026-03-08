@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatGBPFromPence } from '@/lib/utils/currency'
 import { Search } from 'lucide-react'
+import type { OrderStatus } from '@/types/database.types'
 
 export const metadata = { title: 'Admin Orders' }
 
@@ -35,7 +36,7 @@ export default async function AdminOrdersPage({
     .order('created_at', { ascending: false })
     .range(from, to)
 
-  if (status && status !== 'all') query = query.eq('status', status)
+  if (status && status !== 'all') query = query.eq('status', status as OrderStatus)
   if (q) query = query.or(`order_number.ilike.%${q}%`)
 
   const { data: orders, count } = await query

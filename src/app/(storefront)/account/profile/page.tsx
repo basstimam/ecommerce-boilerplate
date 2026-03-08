@@ -7,6 +7,10 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -101,114 +105,116 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile & Settings</h1>
-        <p className="mt-1 text-sm text-gray-500">Update your personal details and password.</p>
+        <h1 className="text-2xl font-bold">Profile &amp; Settings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Update your personal details and password.</p>
       </div>
 
-      <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Personal Information</h2>
-        <form onSubmit={handleSubmit(onSaveProfile)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              disabled
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
-            />
-            <p className="mt-1 text-xs text-gray-400">Email cannot be changed here. Contact support.</p>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Personal Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSaveProfile)} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                disabled
+                className="bg-muted text-muted-foreground cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground">Email cannot be changed here. Contact support.</p>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input
-              {...register('full_name')}
-              type="text"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-              placeholder="John Smith"
-            />
-            {errors.full_name && (
-              <p className="mt-1 text-xs text-red-600">{errors.full_name.message}</p>
-            )}
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="full_name">Full Name</Label>
+              <Input
+                id="full_name"
+                {...register('full_name')}
+                type="text"
+                placeholder="John Smith"
+              />
+              {errors.full_name && (
+                <p className="text-xs text-destructive">{errors.full_name.message}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number (optional)</label>
-            <input
-              {...register('phone')}
-              type="tel"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-              placeholder="+44 7700 000000"
-            />
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Phone Number <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input
+                id="phone"
+                {...register('phone')}
+                type="tel"
+                placeholder="+44 7700 000000"
+              />
+            </div>
 
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
-            >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save Changes
-            </button>
-          </div>
-        </form>
-      </div>
+            <div className="pt-2">
+              <Button type="submit" disabled={loading}>
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Change Password</h2>
-        <form onSubmit={handlePwdSubmit(onChangePassword)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-            <input
-              {...registerPwd('password')}
-              type="password"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-              placeholder="Min. 8 characters"
-            />
-            {pwdErrors.password && (
-              <p className="mt-1 text-xs text-red-600">{pwdErrors.password.message}</p>
-            )}
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Change Password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePwdSubmit(onChangePassword)} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="password">New Password</Label>
+              <Input
+                id="password"
+                {...registerPwd('password')}
+                type="password"
+                placeholder="Min. 8 characters"
+              />
+              {pwdErrors.password && (
+                <p className="text-xs text-destructive">{pwdErrors.password.message}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-            <input
-              {...registerPwd('confirm_password')}
-              type="password"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-              placeholder="Repeat new password"
-            />
-            {pwdErrors.confirm_password && (
-              <p className="mt-1 text-xs text-red-600">{pwdErrors.confirm_password.message}</p>
-            )}
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm_password">Confirm New Password</Label>
+              <Input
+                id="confirm_password"
+                {...registerPwd('confirm_password')}
+                type="password"
+                placeholder="Repeat new password"
+              />
+              {pwdErrors.confirm_password && (
+                <p className="text-xs text-destructive">{pwdErrors.confirm_password.message}</p>
+              )}
+            </div>
 
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={passwordLoading}
-              className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
-            >
-              {passwordLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Update Password
-            </button>
-          </div>
-        </form>
-      </div>
+            <div className="pt-2">
+              <Button type="submit" disabled={passwordLoading}>
+                {passwordLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                Update Password
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-xl border border-red-100 bg-red-50 p-6">
-        <h2 className="text-base font-semibold text-red-900 mb-2">Danger Zone</h2>
-        <p className="text-sm text-red-700 mb-4">
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6">
+        <h2 className="text-base font-semibold text-destructive mb-2">Danger Zone</h2>
+        <p className="text-sm text-muted-foreground mb-4">
           Once you delete your account, all your data will be permanently removed. This action cannot be undone.
         </p>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
           onClick={() => toast.error('To delete your account, please contact support@yourstore.co.uk')}
-          className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
         >
           Delete Account
-        </button>
+        </Button>
       </div>
     </div>
   )
